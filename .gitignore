@@ -1,0 +1,15 @@
+# Build artifacts
+apk/.gradle/
+apk/app/build/
+apk/build/
+apk/local.properties
+
+# Review state
+design-review.json
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>मेरे नेट बॉक्स</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+:root{
+  --brand:#D9008D;--brand-lt:#FFE5F6;--hdr:#443152;--pri:#161021;--sec:#665E75;
+  --hint:#A7A1B2;--bdr:#E8E4F0;--bg:#FAF9FC;--card:#FFF;--n100:#F1EDF7;
+  --pos:#008043;--neg:#D92130;--warn:#FF8000;--info:#6D17CE;
+  --tile-home:#E8F5E9;--tile-office:#E3F2FD;--tile-pickup:#FFF3E0;--tile-fail:#FFEBEE;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans Devanagari','Noto Sans',sans-serif;background:var(--bg);color:var(--pri);overflow:hidden;width:100vw;height:100vh}
+.scr{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;background:var(--bg)}
+.scr.on{display:flex}
+/* App bar */
+.ab{display:flex;align-items:center;padding:8px 4px;min-height:56px;flex-shrink:0;background:var(--hdr);color:#fff}
+.ab .back,.ab .menu{width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:none;color:inherit}
+.ab .title{flex:1;font-size:16px;font-weight:700;padding:0 4px}
+/* Body */
+.bd{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+/* Cards */
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:16px;margin-bottom:12px}
+.card-flat{background:var(--n100);border:1px solid var(--bdr);border-radius:16px;padding:16px;margin-bottom:12px}
+/* Summary card */
+.summary{background:var(--n100);border:1px solid var(--bdr);border-radius:20px;padding:20px;margin-bottom:16px;text-align:center}
+.summary .big{font-size:48px;font-weight:700;line-height:1.1}
+.summary .label{font-size:16px;color:var(--sec);margin-top:4px}
+/* Tile grid */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.tile{border-radius:16px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:100px;position:relative}
+.tile .mi{font-size:28px;opacity:.7}
+.tile .t-count{font-size:24px;font-weight:700}
+.tile .t-label{font-size:13px;color:var(--pri);opacity:.8}
+.tile-home{background:var(--tile-home);border:1px solid #C8E6C9}
+.tile-office{background:var(--tile-office);border:1px solid #BBDEFB}
+.tile-pickup{background:var(--tile-pickup);border:1px solid #FFE0B2}
+.tile-fail{background:var(--tile-fail);border:1px solid #FFCDD2}
+/* CTA */
+.cta{display:flex;align-items:center;justify-content:center;padding:14px 24px;background:var(--brand);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;width:100%;cursor:pointer;font-family:inherit;flex-shrink:0}
+.cta:disabled{opacity:.4;pointer-events:none}
+.cta-outline{background:none;border:2px solid var(--brand);color:var(--brand)}
+.cta-ghost{background:var(--brand-lt);color:var(--brand);border:none}
+.cta-bar{padding:12px 16px;flex-shrink:0}
+/* Stepper */
+.stepper{display:flex;align-items:center;justify-content:center;gap:0;margin:16px 0}
+.step{display:flex;flex-direction:column;align-items:center;flex:1}
+.step .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--hint);background:var(--bg)}
+.step .dot.done{background:var(--pos);border-color:var(--pos);color:#fff}
+.step .dot.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.step .line{height:2px;flex:1;background:var(--bdr);margin:0 -4px}
+.step .line.done{background:var(--pos)}
+.step .s-label{font-size:10px;color:var(--hint);margin-top:4px;text-align:center}
+.step .s-label.active{color:var(--brand);font-weight:600}
+.stepper-row{display:flex;align-items:center;width:100%}
+.stepper-row .line{flex:1;height:2px;background:var(--bdr)}
+.stepper-row .line.done{background:var(--pos)}
+.stepper-labels{display:flex;width:100%;margin-top:6px}
+.stepper-labels span{flex:1;text-align:center;font-size:10px;color:var(--hint)}
+.stepper-labels span.active{color:var(--brand);font-weight:600}
+.stepper-labels span.done{color:var(--pos)}
+/* Order card */
+.order-card{background:linear-gradient(135deg,#F3E5F5,#EDE7F6);border:1px solid #CE93D8;border-radius:16px;padding:16px 16px 12px;margin-bottom:16px;cursor:pointer}
+.order-card .oc-title{font-size:16px;font-weight:700;color:var(--info);margin-bottom:8px}
+.order-card .oc-detail{font-size:13px;color:var(--sec);margin-top:8px}
+/* Fund mini card */
+.fund-mini{background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:16px}
+.fund-mini .fm-left{display:flex;flex-direction:column;gap:2px}
+.fund-mini .fm-label{font-size:12px;color:var(--sec)}
+.fund-mini .fm-amount{font-size:20px;font-weight:700}
+.fund-mini .fm-cta{font-size:13px;color:var(--brand);font-weight:600}
+/* Ticket card */
+.ticket{background:var(--card);border:1px solid var(--bdr);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.ticket .tk-hdr{background:var(--hdr);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.ticket .tk-hdr .tk-id{font-size:14px;font-weight:600}
+.ticket .tk-hdr .tk-badge{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:600}
+.tk-badge.urgent{background:#FFCDD2;color:var(--neg)}
+.tk-badge.warning{background:#FFE0B2;color:#E65100}
+.tk-badge.normal{background:#C8E6C9;color:var(--pos)}
+.ticket .tk-body{padding:12px 16px}
+.ticket .tk-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ticket .tk-label{font-size:12px;color:var(--sec)}
+.ticket .tk-value{font-size:14px;font-weight:600}
+.ticket .tk-cta{display:flex;align-items:center;justify-content:center;padding:10px;background:var(--brand);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;width:100%;cursor:pointer;font-family:inherit;margin-top:8px}
+/* Deposit card */
+.dep-warn{background:#FFEBEE;border:1px solid #FFCDD2;border-radius:16px;padding:20px;text-align:center;margin-bottom:16px}
+.dep-warn .dw-amount{font-size:32px;font-weight:700;color:var(--neg)}
+.dep-warn .dw-label{font-size:14px;color:var(--neg);margin-top:4px}
+.dep-calc{display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;padding:12px;background:var(--n100);border-radius:12px;margin-bottom:16px}
+/* Device ID row */
+.did-row{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:14px}
+.did-row:last-child{border-bottom:none}
+.did-row .mi{margin-right:8px;color:var(--sec);font-size:20px}
+.did-row .did-id{font-weight:600;flex:1}
+.did-row .did-date{font-size:12px;color:var(--hint)}
+.did-chip{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:600}
+.did-chip.ok{background:#E8F5E9;color:var(--pos)}
+.did-chip.charge{background:#FFF3E0;color:#E65100}
+/* Ledger batch */
+.batch{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:16px;margin-bottom:12px}
+.batch .b-hdr{display:flex;justify-content:space-between;margin-bottom:8px}
+.batch .b-count{font-size:16px;font-weight:700}
+.batch .b-date{font-size:12px;color:var(--hint)}
+.batch .b-extra{font-size:12px;color:var(--info);margin-top:4px}
+/* Transaction row */
+.tx-row{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--bdr)}
+.tx-row:last-child{border-bottom:none}
+.tx-row .tx-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;font-size:20px}
+.tx-row .tx-icon.credit{background:#E8F5E9;color:var(--pos)}
+.tx-row .tx-icon.debit{background:#FFEBEE;color:var(--neg)}
+.tx-row .tx-info{flex:1}
+.tx-row .tx-desc{font-size:14px;font-weight:600}
+.tx-row .tx-date{font-size:12px;color:var(--hint)}
+.tx-row .tx-amt{font-size:16px;font-weight:700}
+.tx-row .tx-amt.credit{color:var(--pos)}
+.tx-row .tx-amt.debit{color:var(--neg)}
+/* Scanner */
+.scan-bg{background:#1a1a2e;color:#fff;align-items:center;justify-content:center}
+.scan-bg .ab{background:transparent}
+.viewfinder{width:calc(100% - 48px);max-width:320px;height:180px;border:2px dashed rgba(255,255,255,.5);border-radius:16px;position:relative;margin:40px auto 24px}
+.viewfinder .scan-line{position:absolute;top:8px;bottom:8px;width:2px;background:var(--brand);left:10%;animation:scanAnim 2s ease-in-out infinite}
+@keyframes scanAnim{0%,100%{left:10%}50%{left:90%}}
+.scan-msg{text-align:center;font-size:16px;margin:16px 0;color:rgba(255,255,255,.8)}
+.scan-result{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:24px}
+.scan-result .mi{font-size:80px;margin-bottom:16px}
+.scan-result .sr-title{font-size:24px;font-weight:700;margin-bottom:8px}
+.scan-result .sr-desc{font-size:14px;color:rgba(255,255,255,.7);margin-bottom:24px}
+/* Photo capture */
+.photo-area{flex:1;background:#2a2a3e;display:flex;align-items:center;justify-content:center;position:relative}
+.photo-placeholder{width:280px;height:200px;border:2px dashed rgba(255,255,255,.4);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.5)}
+.photo-placeholder .mi{font-size:48px}
+.shutter{width:64px;height:64px;border-radius:50%;background:#fff;border:4px solid var(--brand);cursor:pointer;display:flex;align-items:center;justify-content:center;margin:16px auto}
+.shutter .inner{width:48px;height:48px;border-radius:50%;background:var(--brand)}
+/* Overlays */
+.ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:300;padding:24px}
+.ov.on{display:flex}
+.ov-box{background:var(--card);border-radius:24px;padding:24px;width:100%;max-width:312px;text-align:center}
+.ov-box .ov-title{font-size:20px;font-weight:700;margin-bottom:12px}
+.ov-box .ov-desc{font-size:14px;color:var(--sec);margin-bottom:20px}
+.ov-box .ov-icon{font-family:'Material Icons Round';font-size:64px;margin-bottom:12px;font-style:normal;-webkit-font-smoothing:antialiased}
+/* Bottom sheets */
+.bs{position:fixed;top:0;left:0;width:100%;height:100%;z-index:200;display:none}
+.bs.on{display:block}
+.bs .bs-dim{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4)}
+.bs .bs-panel{position:absolute;bottom:0;left:0;width:100%;background:var(--card);border-radius:20px 20px 0 0;padding:12px 16px 24px;transform:translateY(100%);transition:transform .3s ease}
+.bs.on .bs-panel{transform:translateY(0)}
+.bs .bs-handle{width:40px;height:4px;background:var(--bdr);border-radius:4px;margin:0 auto 16px}
+.bs .bs-title{font-size:20px;font-weight:700;margin-bottom:16px}
+/* Counter */
+.counter{display:flex;align-items:center;justify-content:center;gap:16px;margin:16px 0}
+.counter .c-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--bdr);background:var(--card);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.counter .c-val{font-size:28px;font-weight:700;min-width:60px;text-align:center}
+/* Checkbox row */
+.cb-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--bdr);border-radius:12px;cursor:pointer;margin-bottom:12px}
+.cb-row.checked{border-color:var(--brand);background:var(--brand-lt)}
+.cb-box{width:24px;height:24px;border:2px solid var(--bdr);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb-row.checked .cb-box{background:var(--brand);border-color:var(--brand);color:#fff}
+.cb-row .cb-text{font-size:14px;font-weight:600}
+/* Expand toggle */
+.expand-toggle{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:600;color:var(--brand);cursor:pointer;padding:8px 0}
+/* Interceptor */
+.interceptor{background:var(--n100);align-items:center;justify-content:center;text-align:center;padding:32px}
+.interceptor .int-icon{font-size:80px;color:var(--warn);margin-bottom:16px}
+.interceptor .int-title{font-size:24px;font-weight:700;margin-bottom:12px}
+.interceptor .int-desc{font-size:14px;color:var(--sec);margin-bottom:32px;line-height:1.6}
+/* 3-dot menu */
+.menu-drop{position:absolute;top:56px;right:8px;background:var(--card);color:var(--pri);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:8px 0;min-width:200px;z-index:100;display:none}
+.menu-drop.on{display:block}
+.menu-drop .m-item{padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer}
+.menu-drop .m-item:active{background:var(--n100)}
+/* Utility */
+.mi{font-family:'Material Icons Round';font-size:24px;font-style:normal;-webkit-font-smoothing:antialiased}
+.row{display:flex;align-items:center}
+.gap4{gap:4px}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}
+.mt8{margin-top:8px}.mt16{margin-top:16px}.mb8{margin-bottom:8px}.mb16{margin-bottom:16px}
+.fs12{font-size:12px}.fs14{font-size:14px}.fs16{font-size:16px}.fs20{font-size:20px}
+.fw6{font-weight:600}.fw7{font-weight:700}
+.tc-sec{color:var(--sec)}.tc-hint{color:var(--hint)}.tc-brand{color:var(--brand)}.tc-pos{color:var(--pos)}.tc-neg{color:var(--neg)}.tc-warn{color:var(--warn)}.tc-info{color:var(--info)}
+.text-center{text-align:center}
+.flex1{flex:1}
+.hidden{display:none!important}
+.info-box{background:#F3E5F5;border:1px solid #CE93D8;border-radius:12px;padding:12px 16px;font-size:13px;color:var(--info);line-height:1.6;margin-bottom:12px}
+/* Scan FAB */
+.scan-fab{position:absolute;bottom:80px;right:16px;width:56px;height:56px;border-radius:50%;background:var(--info);color:#fff;border:none;box-shadow:0 4px 12px rgba(109,23,206,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10}
+.scan-fab .mi{font-size:28px}
+/* Scan section on landing */
+.scan-section{background:linear-gradient(135deg,#EDE7F6,#F3E5F5);border:1px solid #CE93D8;border-radius:16px;padding:16px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.scan-section .scan-icon{width:48px;height:48px;border-radius:50%;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.scan-section .scan-text{flex:1}
+.scan-section .scan-title{font-size:14px;font-weight:700;color:var(--info)}
+.scan-section .scan-desc{font-size:12px;color:var(--sec);margin-top:2px}
+</style>
+</head>
+<body>
+
+<!-- ===== S1: LANDING ===== -->
+<div class="scr on" id="s1">
+  <div class="ab">
+    <div class="back" onclick="history.back()"><span class="mi">arrow_back</span></div>
+    <div class="title" data-hi="मेरे नेट बॉक्स" data-en="My Net Boxes">मेरे नेट बॉक्स</div>
+    <div class="back" onclick="toggleLang()" id="langBtn" style="font-size:12px;font-weight:700;width:auto;padding:0 6px">EN</div>
+    <div class="menu" onclick="toggleMenu()"><span class="mi">more_vert</span></div>
+    <div class="menu-drop" id="menuDrop">
+      <div class="m-item" onclick="go('s16');toggleMenu()" data-hi="नेट बॉक्स का हिसाब" data-en="Net Box Ledger">नेट बॉक्स का हिसाब</div>
+      <div class="m-item" onclick="go('s7');toggleMenu()" data-hi="सक्सेस फंड" data-en="Success Fund">सक्सेस फंड</div>
+    </div>
+  </div>
+  <div class="bd" id="s1-body">
+    <!-- Combined summary + scan card -->
+    <div class="summary" style="text-align:left;padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="mi" style="font-size:24px;color:var(--pri)">router</span></div>
+        <div style="flex:1">
+          <div style="font-size:14px;color:var(--sec)" data-hi="आपके खाते में चढ़े हुए नेट बॉक्स" data-en="Net boxes in your account">आपके खाते में चढ़े हुए नेट बॉक्स</div>
+          <div style="font-size:40px;font-weight:700;line-height:1.1" id="totalCount">50</div>
+        </div>
+      </div>
+      <div onclick="state.scanFrom='s1';go('s8')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--info);color:#fff;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer"><span class="mi" style="font-size:18px">document_scanner</span> <span data-hi="स्कैन करें" data-en="Scan">स्कैन करें</span></div>
+    </div>
+    <!-- Order tracker (conditional) -->
+    <div id="orderSection" class="hidden">
+      <div class="order-card" id="orderCard">
+        <div class="oc-title"><span class="mi" style="font-size:16px;vertical-align:middle">local_shipping</span> <span data-hi="ऑर्डर ट्रैकिंग" data-en="Order Tracking">ऑर्डर ट्रैकिंग</span></div>
+        <div id="orderStepperContainer" style="margin:12px 0"></div>
+        <div class="oc-detail" id="orderDetail" style="margin-bottom:4px"></div>
+        <div id="orderCta" class="hidden" style="margin-top:12px"><button onclick="go('s6')" style="width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer" data-hi="डिलीवरी कन्फर्म करें" data-en="Confirm Delivery">डिलीवरी कन्फर्म करें</button></div>
+      </div>
+    </div>
+    <!-- Tiles -->
+    <div class="tiles">
+      <div class="tile tile-home" onclick="showBs('bsCustomerHome')">
+        <span class="mi">home</span>
+        <div class="t-count" id="cntHome">35</div>
+        <div class="t-label" data-hi="कस्टमर के घर पर" data-en="At customer's home">कस्टमर के घर पर</div>
+      </div>
+      <div class="tile tile-office" onclick="go('s3')">
+        <span class="mi">business</span>
+        <div class="t-count" id="cntOffice">06</div>
+        <div class="t-label" data-hi="ऑफिस में" data-en="In office">ऑफिस में</div>
+      </div>
+      <div class="tile tile-pickup" onclick="go('s4')">
+        <span class="mi">assignment_return</span>
+        <div class="t-count" id="cntPickup">04</div>
+        <div class="t-label" data-hi="कस्टमर से वापस लाना है" data-en="Pickup pending">कस्टमर से वापस लाना है</div>
+      </div>
+      <div class="tile tile-fail" onclick="go('s5')">
+        <span class="mi">error_outline</span>
+        <div class="t-count" id="cntFail">05</div>
+        <div class="t-label" data-hi="वापस नहीं ला पाए" data-en="Could not recover">वापस नहीं ला पाए</div>
+      </div>
+    </div>
+    <!-- Capacity -->
+    <div style="font-size:13px;color:var(--sec);text-align:center;margin-bottom:12px" id="capacityText">आप 20 नेट बॉक्स और जारी करवा सकते हैं</div>
+  </div>
+  <div class="cta-bar" id="orderCtaBar">
+    <button class="cta cta-outline" onclick="showBs('bsRequest')" data-hi="नए नेट बॉक्स मंगवाएं" data-en="Order New Net Boxes">नए नेट बॉक्स मंगवाएं</button>
+  </div>
+</div>
+
+<!-- ===== S3: OFFICE DEVICE LIST ===== -->
+<div class="scr" id="s3">
+  <div class="ab"><div class="back" onclick="go('s1')"><span class="mi">arrow_back</span></div><div class="title" data-hi="ऑफिस में मौजूद नेट बॉक्स" data-en="Net Boxes in Office">ऑफिस में मौजूद नेट बॉक्स</div></div>
+  <div class="bd">
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><span class="fs14 tc-sec">नेट बॉक्स की संख्या</span><span class="fs16 fw7" id="officeCount">06</span></div>
+    <div class="card" style="padding:0;overflow:hidden" id="officeList"></div>
+    <div class="info-box mt16"><span class="mi" style="font-size:16px;vertical-align:middle">info</span> <span data-hi="ये नेट बॉक्स आपके ऑफिस में हैं और नए कनेक्शन के लिए तैयार हैं।" data-en="These net boxes are in your office and ready for new connections.">ये नेट बॉक्स आपके ऑफिस में हैं और नए कनेक्शन के लिए तैयार हैं।</span></div>
+    <button class="cta mt16" onclick="state.scanFrom='s3';go('s8')" data-hi="नेट बॉक्स स्कैन करें" data-en="Scan Net Box">नेट बॉक्स स्कैन करें</button>
+  </div>
+</div>
+
+<!-- ===== S4: PICKUP TASK LIST ===== -->
+<div class="scr" id="s4">
+  <div class="ab"><div class="back" onclick="go('s1')"><span class="mi">arrow_back</span></div><div class="title" data-hi="कस्टमर से वापस लाना है" data-en="Pickup Pending">कस्टमर से वापस लाना है</div></div>
+  <div class="bd" id="pickupList"></div>
+</div>
+
+<!-- ===== S5: FINANCIAL CONSEQUENCE ===== -->
+<div class="scr" id="s5">
+  <div class="ab"><div class="back" onclick="go('s1')"><span class="mi">arrow_back</span></div><div class="title" data-hi="हिसाब किताब" data-en="Account Summary">हिसाब किताब</div></div>
+  <div class="bd">
+    <div class="dep-warn">
+      <div class="dw-amount" id="lockedAmt">₹1,250</div>
+      <div class="dw-label">लॉक्ड डिपॉजिट</div>
+    </div>
+    <div class="dep-calc"><span id="failCntCalc">5</span> नेट बॉक्स × ₹250 = <span class="tc-neg fw7" id="calcTotal">₹1,250</span></div>
+    <div class="info-box"><span class="mi" style="font-size:16px;vertical-align:middle">info</span> कस्टमर से नेट बॉक्स वापस ला कर आप लॉक्ड डिपॉजिट वापस पा सकते हैं।</div>
+    <div class="fs16 fw7 mb8 mt16">डिवाइस डिटेल्स</div>
+    <div id="failList"></div>
+  </div>
+</div>
+
+<!-- ===== S6: CONFIRM DELIVERY ===== -->
+<div class="scr" id="s6">
+  <div class="ab" style="background:transparent;color:var(--pri)"><div class="back" onclick="go('s1')"><span class="mi">arrow_back</span></div><div class="title" style="color:var(--pri)" data-hi="डिलीवरी कन्फर्म करें" data-en="Confirm Delivery">डिलीवरी कन्फर्म करें</div></div>
+  <div class="bd" style="background:var(--n100)">
+    <div class="fs20 fw7 mb16" id="confirmTitle">10 नेट बॉक्स की डिलीवरी कन्फर्म करें</div>
+    <div class="card" style="padding:12px 16px">
+      <div class="fs14 fw6 mb8" style="border-bottom:1px solid var(--bdr);padding-bottom:8px">नेट बॉक्स डिटेल</div>
+      <div id="confirmDeviceList"></div>
+      <div class="expand-toggle" id="confirmExpand" onclick="toggleConfirmExpand()">और देखें <span class="mi" style="font-size:18px">expand_more</span></div>
+    </div>
+  </div>
+  <div class="cta-bar" style="background:var(--n100)">
+    <div class="cb-row" id="confirmCb" onclick="toggleConfirmCb()">
+      <div class="cb-box"><span class="mi" style="font-size:18px">check</span></div>
+      <div class="cb-text" id="confirmCbText">हाँ, 10 नेट बॉक्स का ऑर्डर मिल गया</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== S7: SUCCESS FUND ===== -->
+<div class="scr" id="s7">
+  <div class="ab"><div class="back" onclick="go('s1')"><span class="mi">arrow_back</span></div><div class="title" data-hi="पार्टनर सक्सेस फंड" data-en="Partner Success Fund">पार्टनर सक्सेस फंड</div></div>
+  <div class="bd">
+    <div class="card-flat" style="display:flex;align-items:center;justify-content:space-between">
+      <div><div class="fs14 tc-sec">कुल अमाउंट</div><div class="fs20 fw7 mt8" id="fundBalance">₹26,000</div></div>
+      <button class="cta" style="width:auto;padding:8px 16px;font-size:14px" onclick="showBs('bsTopup')">टॉप-अप करें</button>
+    </div>
+    <div class="fs16 fw7 mt16 mb8">हाल ही में किए गए टॉप-अप</div>
+    <div id="txList"></div>
+  </div>
+</div>
+
+<!-- ===== S8: SCANNER (single-screen state machine) ===== -->
+<div class="scr" id="s8" style="background:#000">
+  <div class="ab" style="background:rgba(0,0,0,0.6);z-index:3;position:relative"><div class="back" onclick="onScanBack()"><span class="mi">arrow_back</span></div><div class="title" data-hi="नेट बॉक्स स्कैन" data-en="Scan Net Box">नेट बॉक्स स्कैन</div></div>
+  <!-- Camera layer -->
+  <div style="flex:1;position:relative;overflow:hidden">
+    <video id="camVideo" autoplay playsinline muted style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;background:#1a1a2e"></video>
+    <canvas id="camFreeze" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:none"></canvas>
+    <!-- Overlay -->
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1">
+      <div class="viewfinder" id="scanVF" style="background:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.55)">
+        <div class="scan-line" id="scanLine" style="display:none"></div>
+      </div>
+      <div class="scan-msg" id="scanMsg" style="margin-top:24px">नेट बॉक्स ID को स्कैनर के बीच में रखें</div>
+      <!-- Success/fail overlay on viewfinder -->
+      <div id="scanResultOverlay" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);z-index:5;text-align:center">
+        <span class="mi" id="scanResultIcon" style="font-size:72px">check_circle</span>
+      </div>
+    </div>
+    <!-- Camera loading indicator -->
+    <div id="camLoading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:0;color:rgba(255,255,255,0.5)">
+      <span class="mi" style="font-size:48px">videocam</span>
+      <div style="font-size:13px;margin-top:8px" data-hi="कैमरा लोड हो रहा है..." data-en="Loading camera...">कैमरा लोड हो रहा है...</div>
+    </div>
+  </div>
+  <!-- CTA area -->
+  <div style="padding:16px;position:relative;z-index:2;background:rgba(0,0,0,0.6)" id="scanCtaBar">
+    <button id="scanCta" onclick="startScan()" style="width:100%;padding:16px;background:var(--brand);color:#fff;border:none;border-radius:16px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span class="mi" style="font-size:20px">document_scanner</span> स्कैन शुरू करें</button>
+  </div>
+  <!-- Result bottom sheet (inside s8) -->
+  <div id="scanResultBS" style="position:absolute;bottom:0;left:0;width:100%;z-index:10;transform:translateY(100%);transition:transform .4s ease">
+    <div style="background:var(--card);border-radius:20px 20px 0 0;padding:16px 16px 24px">
+      <div style="width:40px;height:4px;background:var(--bdr);border-radius:4px;margin:0 auto 16px"></div>
+      <div id="scanBsIcon" style="text-align:center;margin-bottom:8px"><span class="mi" style="font-size:48px;color:var(--pos)">check_circle</span></div>
+      <div id="scanBsTitle" class="fs20 fw7 text-center" style="margin-bottom:4px">स्कैन सफल!</div>
+      <div id="scanBsDesc" class="fs14 tc-sec text-center" style="margin-bottom:4px">यह नेट बॉक्स आपकी इन्वेंटरी में जोड़ दिया गया है</div>
+      <div id="scanBsDeviceId" class="text-center fw6" style="background:var(--n100);display:none;padding:4px 16px;border-radius:8px;margin:8px auto;font-size:14px"></div>
+      <div style="margin-top:16px" id="scanBsActions">
+        <button class="cta" onclick="finishScan()">ठीक है</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== S11: PHOTO CAPTURE ===== -->
+<div class="scr scan-bg" id="s11">
+  <div class="ab" style="background:transparent"><div class="back" onclick="showOv('ovPhotoExit')"><span class="mi">arrow_back</span></div><div class="title" data-hi="नेट बॉक्स फोटो" data-en="Net Box Photo">नेट बॉक्स फोटो</div></div>
+  <div class="photo-area">
+    <div class="photo-placeholder"><span class="mi">photo_camera</span><div data-hi="नेट बॉक्स की साफ़ फोटो खींचें" data-en="Take a clear photo of the net box">नेट बॉक्स की साफ़ फोटो खींचें</div><div style="font-size:12px" data-hi="नेट बॉक्स ID साफ़ दिखनी चाहिए" data-en="Net box ID should be clearly visible">नेट बॉक्स ID साफ़ दिखनी चाहिए</div></div>
+  </div>
+  <div style="padding:16px;display:flex;justify-content:center"><div class="shutter" onclick="submitPhoto()"><div class="inner"></div></div></div>
+</div>
+
+<!-- ===== S12: DEFECTIVE OUTCOME ===== -->
+<div class="scr" id="s12">
+  <div class="ab"><div class="back" onclick="go('s1')"><span class="mi">arrow_back</span></div></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px">
+    <span class="mi" style="font-size:80px;color:var(--warn)">warning</span>
+    <div class="fs20 fw7 mt16" data-hi="इस नेट बॉक्स को अलग से संभाल कर रखें" data-en="Keep this net box aside">इस नेट बॉक्स को अलग से संभाल कर रखें</div>
+    <div class="fs14 tc-sec mt8" style="line-height:1.6" data-hi="आपकी बताई समस्या को हम वेरीफाई करके इसका समाधान करेंगे" data-en="We'll verify the issue and resolve it soon">आपकी बताई समस्या को हम वेरीफाई करके इसका समाधान करेंगे</div>
+  </div>
+  <div class="cta-bar"><button class="cta" onclick="go('s1')" data-hi="बाकी नेट बॉक्स मैनेज करें" data-en="Manage Other Net Boxes">बाकी नेट बॉक्स मैनेज करें</button></div>
+</div>
+
+<!-- ===== S16: ISSUANCE LEDGER ===== -->
+<div class="scr" id="s16">
+  <div class="ab"><div class="back" onclick="go('s1')"><span class="mi">arrow_back</span></div><div class="title" data-hi="जारी किए गए नेट बॉक्स का हिसाब" data-en="Issued Net Boxes Ledger">जारी किए गए नेट बॉक्स का हिसाब</div></div>
+  <div class="bd" id="ledgerList"></div>
+</div>
+
+<!-- ===== S17: INTERCEPTOR ===== -->
+<div class="scr interceptor" id="s17">
+  <span class="mi int-icon">warning</span>
+  <div class="int-title" data-hi="डिलीवरी कन्फर्म करें!" data-en="Confirm Delivery!">डिलीवरी कन्फर्म करें!</div>
+  <div class="int-desc" data-hi="आपका ऑर्डर 48+ घंटे पहले पहुंचा है।&#10;बिना डिलीवरी कन्फर्म किये आप पार्टनर प्लस ऐप इस्तेमाल नहीं कर पाएंगे।" data-en="Your order arrived over 48 hours ago.&#10;You cannot use the Partner Plus app without confirming delivery.">आपका ऑर्डर 48+ घंटे पहले पहुंचा है।<br>बिना डिलीवरी कन्फर्म किये आप पार्टनर प्लस ऐप इस्तेमाल नहीं कर पाएंगे।</div>
+  <button class="cta" style="width:auto;padding:14px 48px" onclick="go('s6')" data-hi="कन्फर्म करें" data-en="Confirm Now">कन्फर्म करें</button>
+</div>
+
+<!-- ===== BOTTOM SHEETS ===== -->
+
+<!-- BS: Customer Home Info -->
+<div class="bs" id="bsCustomerHome">
+  <div class="bs-dim" onclick="hideBs('bsCustomerHome')"></div>
+  <div class="bs-panel">
+    <div class="bs-handle"></div>
+    <div class="bs-title" data-hi="कस्टमर के घर पर" data-en="At Customer's Home">कस्टमर के घर पर</div>
+    <div class="row gap8 mb16"><span class="mi tc-pos">home</span><span class="fs20 fw7" id="bsHomeCnt">35</span><span class="fs14 tc-sec">नेट बॉक्स</span></div>
+    <div class="info-box" style="background:#E8F5E9;border-color:#C8E6C9;color:var(--pri)" data-hi="यह वो नेट बॉक्स हैं जो कस्टमर के घर पर रखें हैं — जिनका बिल भरा है, या जिनकी पिकअप टिकट नहीं बनी, या पिकअप अभी बाकी है।" data-en="These are net boxes installed at customers' homes — either active with paid bills, or with no pickup ticket raised yet, or pickup still pending.">यह वो नेट बॉक्स हैं जो कस्टमर के घर पर रखें हैं — जिनका बिल भरा है, या जिनकी पिकअप टिकट नहीं बनी, या पिकअप अभी बाकी है।</div>
+    <button class="cta cta-ghost mt16" onclick="hideBs('bsCustomerHome')" data-hi="समझ गया" data-en="Got it">समझ गया</button>
+  </div>
+</div>
+
+<!-- BS: Request Device -->
+<div class="bs" id="bsRequest">
+  <div class="bs-dim" onclick="hideBs('bsRequest')"></div>
+  <div class="bs-panel">
+    <div class="bs-handle"></div>
+    <div class="bs-title" data-hi="आपको कितने नेट बॉक्स चाहिए?" data-en="How many net boxes do you need?">आपको कितने नेट बॉक्स चाहिए?</div>
+    <div class="counter">
+      <button class="c-btn" onclick="adjustReq(-10)">−</button>
+      <div class="c-val" id="reqCount">10</div>
+      <button class="c-btn" onclick="adjustReq(10)">+</button>
+    </div>
+    <div class="text-center fs14 tc-sec mb8" id="reqCostText">10 नेट बॉक्स = ₹2,000 (सक्सेस फंड से)</div>
+    <div style="background:var(--n100);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div><div class="fs12 tc-sec" data-hi="सक्सेस फंड बैलेंस" data-en="Success Fund Balance">सक्सेस फंड बैलेंस</div><div class="fs16 fw7" id="reqFundBal">₹26,000</div></div>
+      <div class="fs12 tc-hint" id="reqFundStatus">✓ पर्याप्त बैलेंस</div>
+    </div>
+    <button class="cta" onclick="submitRequest()" data-hi="रिक्वेस्ट भेजें" data-en="Send Request">रिक्वेस्ट भेजें</button>
+  </div>
+</div>
+
+<!-- BS: Top-up -->
+<div class="bs" id="bsTopup">
+  <div class="bs-dim" onclick="hideBs('bsTopup')"></div>
+  <div class="bs-panel">
+    <div class="bs-handle"></div>
+    <div class="bs-title" data-hi="बैलेंस बढ़ाएं" data-en="Top Up Balance">बैलेंस बढ़ाएं</div>
+    <div class="text-center fs14 tc-sec mb8" data-hi="₹2,000 में 10 नेट बॉक्स तक" data-en="₹2,000 for up to 10 net boxes">₹2,000 में 10 नेट बॉक्स तक</div>
+    <div class="counter">
+      <button class="c-btn" onclick="adjustTopup(-1)">−</button>
+      <div class="c-val" id="topupUnits">1</div>
+      <button class="c-btn" onclick="adjustTopup(1)">+</button>
+    </div>
+    <div class="text-center fs20 fw7 mb16" id="topupTotal">₹2,000</div>
+    <div class="text-center fs14 mb16" id="topupWallet">वॉलेट बैलेंस: ₹3,000</div>
+    <button class="cta" onclick="submitTopup()" data-hi="टॉप-अप करें" data-en="Top Up">टॉप-अप करें</button>
+  </div>
+</div>
+
+<!-- ===== OVERLAY DIALOGS ===== -->
+
+<!-- OV: Request Success -->
+<div class="ov" id="ovReqSuccess">
+  <div class="ov-box">
+    <div class="ov-icon tc-pos">check_circle</div>
+    <div class="ov-title" data-hi="रिक्वेस्ट भेज दी गई" data-en="Request Sent">रिक्वेस्ट भेज दी गई</div>
+    <div class="ov-desc" id="ovReqDesc">10 नए नेट बॉक्स की रिक्वेस्ट भेज दी गई है</div>
+    <button class="cta" onclick="hideOv('ovReqSuccess');hideBs('bsRequest')" data-hi="ठीक है" data-en="Okay">ठीक है</button>
+  </div>
+</div>
+
+<!-- OV: Insufficient Balance -->
+<div class="ov" id="ovInsufficient">
+  <div class="ov-box">
+    <div class="ov-icon tc-warn">warning</div>
+    <div class="ov-title" data-hi="वॉलेट बैलेंस कम है" data-en="Low Wallet Balance">वॉलेट बैलेंस कम है</div>
+    <div class="ov-desc" data-hi="टॉप-अप करने के लिए आपका वॉलेट बैलेंस कम है" data-en="Your wallet balance is too low to top up">टॉप-अप करने के लिए आपका वॉलेट बैलेंस कम है</div>
+    <button class="cta mb8" onclick="hideOv('ovInsufficient')" data-hi="वॉलेट रिचार्ज करें" data-en="Recharge Wallet">वॉलेट रिचार्ज करें</button>
+    <button class="cta cta-ghost" onclick="hideOv('ovInsufficient')" data-hi="कैंसिल करें" data-en="Cancel">कैंसिल करें</button>
+  </div>
+</div>
+
+<!-- OV: Scan fail (3 tries) -->
+<div class="ov" id="ovScanFail">
+  <div class="ov-box">
+    <div class="ov-icon tc-neg">cancel</div>
+    <div class="ov-title">3 बार स्कैन फेल हो गया</div>
+    <div class="ov-desc">नेट बॉक्स की साफ़ फोटो लें ताकि ID पहचानी जा सके</div>
+    <button class="cta mb8" onclick="hideOv('ovScanFail');go('s11')">नेट बॉक्स की फोटो लें</button>
+    <button class="cta cta-outline" onclick="hideOv('ovScanFail');state.scanFails=0;go('s8')">दोबारा स्कैन करें</button>
+  </div>
+</div>
+
+<!-- OV: Pickup placeholder -->
+<div class="ov" id="ovPickupPlaceholder">
+  <div class="ov-box">
+    <div class="ov-icon tc-info">construction</div>
+    <div class="ov-title" data-hi="पिकअप फ्लो" data-en="Pickup Flow">पिकअप फ्लो</div>
+    <div class="ov-desc" data-hi="यह फ्लो अभी बनाया जा रहा है। जल्द उपलब्ध होगा।" data-en="This flow is being built. Coming soon.">यह फ्लो अभी बनाया जा रहा है। जल्द उपलब्ध होगा।</div>
+    <button class="cta" onclick="hideOv('ovPickupPlaceholder')" data-hi="ठीक है" data-en="Okay">ठीक है</button>
+  </div>
+</div>
+
+<!-- OV: Photo exit guard -->
+<div class="ov" id="ovPhotoExit">
+  <div class="ov-box">
+    <div class="ov-icon tc-warn">warning</div>
+    <div class="ov-title" data-hi="बिना फोटो सबमिट किये वापस जाना चाहते हैं?" data-en="Go back without submitting photo?">बिना फोटो सबमिट किये वापस जाना चाहते हैं?</div>
+    <div class="ov-desc" data-hi="डिवाइस की फोटो व्योम भेजे बिना यह डिवाइस आप लौटा नहीं पाएंगे" data-en="You can't return this device without submitting its photo">डिवाइस की फोटो व्योम भेजे बिना यह डिवाइस आप लौटा नहीं पाएंगे</div>
+    <button class="cta mb8" onclick="hideOv('ovPhotoExit')" data-hi="काम जारी रखें" data-en="Continue">काम जारी रखें</button>
+    <button class="cta cta-ghost" onclick="hideOv('ovPhotoExit');state.scanFails=0;go(state.scanFrom)" data-hi="बाकी नेट बॉक्स मैनेज करें" data-en="Manage Other Net Boxes">बाकी नेट बॉक्स मैनेज करें</button>
+  </div>
+</div>
+
+<!-- Developer FAB -->
+<div id="devFab" onclick="toggleDevMenu()" style="position:fixed;bottom:16px;right:16px;z-index:998;width:40px;height:40px;border-radius:50%;background:#333;color:#0f0;border:2px dashed #0f0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;opacity:0.6"><span class="mi" style="font-size:20px">developer_mode</span></div>
+<div id="devMenu" style="position:fixed;bottom:64px;right:16px;z-index:999;display:none;flex-direction:column;gap:6px;align-items:flex-end">
+  <button onclick="resetDemo();toggleDevMenu()" style="font-size:11px;padding:8px 14px;background:#333;color:#0f0;border:1px dashed #0f0;border-radius:8px;cursor:pointer;font-family:monospace">&#9654; Reset state</button>
+  <button onclick="demoDelivered();toggleDevMenu()" style="font-size:11px;padding:8px 14px;background:#333;color:#0f0;border:1px dashed #0f0;border-radius:8px;cursor:pointer;font-family:monospace">&#9654; Skip to delivered</button>
+  <button onclick="demoInterceptor();toggleDevMenu()" style="font-size:11px;padding:8px 14px;background:#333;color:#0f0;border:1px dashed #0f0;border-radius:8px;cursor:pointer;font-family:monospace">&#9654; 48hr blocker</button>
+</div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────────
+var state = {
+  total:50, atCustomer:35, atOffice:6, toPickup:4, notRecovered:5,
+  officeDevices:[
+    {id:'SY25201',status:'ok'},{id:'SY25202',status:'ok'},{id:'GX35204',status:'charge'},
+    {id:'GX35206',status:'ok'},{id:'SY25210',status:'ok'},{id:'GX35215',status:'ok'}
+  ],
+  pickupTickets:[
+    {id:'WIM21047',customer:'Seema Rajawat',address:'G-69, Jangpura, South Delhi',days:3,device:'SY25180'},
+    {id:'WIM21052',customer:'Raj Kumar',address:'B-12, Saket, New Delhi',days:7,device:'GX35190'},
+    {id:'WIM21058',customer:'Priya Singh',address:'H-4, Lajpat Nagar, Delhi',days:12,device:'SY25195'},
+    {id:'WIM21063',customer:'Amit Verma',address:'D-22, Vasant Kunj, Delhi',days:15,device:'GX35201'}
+  ],
+  notRecoveredDevices:[
+    {id:'SY25100',customer:'Manoj Tiwari',date:'14 Jul\'24',amount:250},
+    {id:'GX35120',customer:'Sunita Devi',date:'5 Jun\'24',amount:250},
+    {id:'SY25145',customer:'Ravi Sharma',date:'20 May\'24',amount:250},
+    {id:'GX35160',customer:'Neha Gupta',date:'8 Apr\'24',amount:250},
+    {id:'SY25170',customer:'Deepak Kumar',date:'15 Mar\'24',amount:250}
+  ],
+  activeOrder:null, // {count,step,date}
+  deliveryPending:false, deliveryHours:0,
+  fundBalance:26000, walletBalance:3000,
+  transactions:[
+    {date:'30 Jun\'24',desc:'टॉप-अप',amount:2000,type:'credit'},
+    {date:'30 Jun\'24',desc:'टॉप-अप',amount:4000,type:'credit'},
+    {date:'30 Jun\'24',desc:'सक्सेस फंड (जॉइनिंग)',amount:20000,type:'credit'}
+  ],
+  batches:[
+    {date:'30 Jun\'24',count:20,extra:0,devices:['SY25201','SY25202','GX35204','GX35206','SY25210','GX35215']},
+    {date:'15 May\'24',count:20,extra:1,devices:['SY25180','GX35190','SY25195','GX35201']},
+    {date:'1 Apr\'24',count:10,extra:0,devices:['SY25100','GX35120','SY25145']}
+  ],
+  scanFails:0, reqCount:10, topupUnits:1,
+  confirmExpanded:false, scanFrom:'s1'
+};
+
+// ─── NAVIGATION ────────────────────────────────────────
+var navStack = ['s1'];
+function go(id) {
+  // Interceptor guard
+  if (state.deliveryPending && state.deliveryHours > 48 && id !== 's6' && id !== 's17') { id = 's17'; }
+  document.querySelectorAll('.scr.on').forEach(function(s){s.classList.remove('on')});
+  document.getElementById(id).classList.add('on');
+  if (navStack[navStack.length-1] !== id) navStack.push(id);
+  if (id==='s1') refreshLanding();
+  if (id==='s3') renderOfficeList();
+  if (id==='s4') renderPickupList();
+  if (id==='s5') renderFailScreen();
+  if (id==='s7') renderFund();
+  if (id==='s16') renderLedger();
+  if (id==='s6') renderConfirmDelivery();
+  if (id==='s8') resetScanner();
+}
+function goBack() {
+  navStack.pop();
+  var prev = navStack[navStack.length-1] || 's1';
+  go(prev);
+}
+
+function showBs(id){
+  document.getElementById(id).classList.add('on');
+  if(id==='bsRequest'){
+    var cost = Math.ceil(state.reqCount/10)*2000;
+    updateReqFundStatus(cost);
+  }
+  if(id==='bsCustomerHome'){
+    document.getElementById('bsHomeCnt').textContent = state.atCustomer;
+  }
+  if(id==='bsTopup'){
+    document.getElementById('topupWallet').textContent = t('वॉलेट बैलेंस','Wallet balance')+': ₹'+state.walletBalance.toLocaleString('en-IN');
+    state.topupUnits = 1;
+    document.getElementById('topupUnits').textContent = '1';
+    document.getElementById('topupTotal').textContent = '₹2,000';
+  }
+}
+function hideBs(id){document.getElementById(id).classList.remove('on')}
+function showOv(id){document.getElementById(id).classList.add('on')}
+function hideOv(id){document.getElementById(id).classList.remove('on')}
+
+function toggleMenu(){document.getElementById('menuDrop').classList.toggle('on')}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.menu')&&!e.target.closest('.menu-drop')) document.getElementById('menuDrop').classList.remove('on');
+});
+
+// ─── DEV FAB ──────────────────────────────────────────
+function toggleDevMenu(){
+  var m = document.getElementById('devMenu');
+  m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+}
+
+// ─── LANGUAGE TOGGLE ──────────────────────────────────
+var currentLang = 'hi';
+function toggleLang(){
+  currentLang = currentLang === 'hi' ? 'en' : 'hi';
+  document.getElementById('langBtn').textContent = currentLang === 'hi' ? 'EN' : 'हि';
+  document.querySelectorAll('[data-hi][data-en]').forEach(function(el){
+    el.textContent = el.getAttribute('data-' + currentLang);
+  });
+  // Re-render whichever screen is currently active
+  document.querySelectorAll('.scr.on').forEach(function(s){
+    var id = s.id;
+    if(id==='s1') refreshLanding();
+    if(id==='s3') renderOfficeList();
+    if(id==='s4') renderPickupList();
+    if(id==='s5') renderFailScreen();
+    if(id==='s6') renderConfirmDelivery();
+    if(id==='s7') renderFund();
+    if(id==='s16') renderLedger();
+  });
+}
+// Translation helper
+function t(hi, en){ return currentLang === 'hi' ? hi : en; }
+
+// ─── LANDING ───────────────────────────────────────────
+function refreshLanding(){
+  document.getElementById('totalCount').textContent = state.total;
+  document.getElementById('cntHome').textContent = String(state.atCustomer).padStart(2,'0');
+  document.getElementById('cntOffice').textContent = String(state.atOffice).padStart(2,'0');
+  document.getElementById('cntPickup').textContent = String(state.toPickup).padStart(2,'0');
+  document.getElementById('cntFail').textContent = String(state.notRecovered).padStart(2,'0');
+  // fundMini removed from landing
+  var remaining = 70 - state.total;
+  document.getElementById('capacityText').textContent = currentLang === 'hi'
+    ? 'आप ' + remaining + ' नेट बॉक्स और जारी करवा सकते हैं'
+    : 'You can get ' + remaining + ' more net boxes issued';
+  // Order section
+  var os = document.getElementById('orderSection');
+  if (state.activeOrder) {
+    os.classList.remove('hidden');
+    renderOrderStepper();
+    document.getElementById('orderDetail').textContent = currentLang === 'hi'
+      ? state.activeOrder.count + ' नेट बॉक्स — ' + state.activeOrder.date
+      : state.activeOrder.count + ' net boxes — ' + state.activeOrder.date;
+    var ctaEl = document.getElementById('orderCta');
+    if(state.activeOrder.step >= 3){ ctaEl.classList.remove('hidden'); } else { ctaEl.classList.add('hidden'); }
+  } else {
+    os.classList.add('hidden');
+  }
+  // Hide order CTA + capacity text while active order exists
+  var orderCtaBar = document.getElementById('orderCtaBar');
+  var capacityEl = document.getElementById('capacityText');
+  if(state.activeOrder){
+    orderCtaBar.style.display = 'none';
+    capacityEl.style.display = 'none';
+  } else {
+    orderCtaBar.style.display = '';
+    capacityEl.style.display = '';
+  }
+}
+function renderOrderStepper(){
+  var steps = currentLang === 'hi' ? ['आर्डर दिया','पैक हो गए','रास्ते में','पहुंच गया'] : ['Ordered','Packed','In Transit','Delivered'];
+  var cur = state.activeOrder ? state.activeOrder.step : 0;
+  var h = '<div class="stepper-row">';
+  for(var i=0;i<4;i++){
+    var cls = i<cur?'done':i===cur?'active':'';
+    h += '<div class="step"><div class="dot '+cls+'">'+(i<cur?'<span class="mi" style="font-size:12px">check</span>':(i+1))+'</div></div>';
+    if(i<3) h += '<div class="line'+(i<cur?' done':'')+'"></div>';
+  }
+  h += '</div><div class="stepper-labels">';
+  for(var j=0;j<4;j++){
+    var c2 = j<cur?'done':j===cur?'active':'';
+    h += '<span class="'+c2+'">'+steps[j]+'</span>';
+  }
+  h += '</div>';
+  document.getElementById('orderStepperContainer').innerHTML = h;
+}
+
+function onOrderCardTap(){
+  if(state.activeOrder && state.activeOrder.step >= 3) go('s6');
+}
+
+// ─── REQUEST ───────────────────────────────────────────
+function adjustReq(d){
+  state.reqCount = Math.max(10,Math.min(50,state.reqCount+d));
+  document.getElementById('reqCount').textContent = state.reqCount;
+  var cost = (state.reqCount/10)*2000;
+  document.getElementById('reqCostText').textContent = state.reqCount + ' ' + t('नेट बॉक्स','net boxes') + ' = ₹'+cost.toLocaleString('en-IN')+' '+t('(सक्सेस फंड से)','(from Success Fund)');
+  updateReqFundStatus(cost);
+}
+function updateReqFundStatus(cost){
+  document.getElementById('reqFundBal').textContent = '₹'+state.fundBalance.toLocaleString('en-IN');
+  var statusEl = document.getElementById('reqFundStatus');
+  if(cost <= state.fundBalance){
+    statusEl.textContent = t('✓ पर्याप्त बैलेंस','✓ Sufficient balance');
+    statusEl.style.color = 'var(--pos)';
+  } else {
+    statusEl.textContent = t('✗ बैलेंस कम है','✗ Low balance');
+    statusEl.style.color = 'var(--neg)';
+  }
+}
+function submitRequest(){
+  var cost = (state.reqCount/10)*2000;
+  if(cost > state.fundBalance){
+    showOv('ovInsufficient');
+    return;
+  }
+  state.fundBalance -= cost;
+  state.transactions.unshift({date:'आज',desc:state.reqCount+' नेट बॉक्स ऑर्डर',amount:cost,type:'debit'});
+  state.activeOrder = {count:state.reqCount, step:0, date:'अनुमानित: 7 दिन'};
+  document.getElementById('ovReqDesc').textContent = t(state.reqCount+' नए नेट बॉक्स की रिक्वेस्ट भेज दी गई है','Request sent for '+state.reqCount+' new net boxes');
+  showOv('ovReqSuccess');
+  // Simulate order progression (8s per step — slow enough to observe each state)
+  setTimeout(function(){if(state.activeOrder)state.activeOrder.step=1;},8000);
+  setTimeout(function(){if(state.activeOrder)state.activeOrder.step=2;},16000);
+  setTimeout(function(){if(state.activeOrder){state.activeOrder.step=3;state.deliveryPending=true;state.deliveryHours=0;}},24000);
+}
+
+// ─── OFFICE LIST ───────────────────────────────────────
+function renderOfficeList(){
+  var h='';
+  state.officeDevices.forEach(function(d){
+    var chip = d.status==='ok'?'<span class="did-chip ok">'+t('तैयार','Ready')+'</span>':'<span class="did-chip charge">'+t('चार्ज करें','Needs charge')+'</span>';
+    h += '<div class="did-row"><span class="mi">router</span><span class="did-id">'+d.id+'</span>'+chip+'</div>';
+  });
+  document.getElementById('officeList').innerHTML = h;
+  document.getElementById('officeCount').textContent = String(state.atOffice).padStart(2,'0');
+}
+
+// ─── PICKUP LIST ───────────────────────────────────────
+function renderPickupList(){
+  var h='';
+  state.pickupTickets.sort(function(a,b){return a.days-b.days});
+  state.pickupTickets.forEach(function(tk){
+    var bc = tk.days<=5?'urgent':tk.days<=10?'warning':'normal';
+    var dayLabel = currentLang==='hi' ? tk.days+' दिन' : tk.days+' days';
+    h += '<div class="ticket"><div class="tk-hdr"><span class="tk-id">'+tk.id+' — '+tk.device+'</span><span class="tk-badge '+bc+'">'+dayLabel+'</span></div>';
+    h += '<div class="tk-body"><div class="tk-row"><span class="tk-label">'+t('कस्टमर','Customer')+'</span><span class="tk-value">'+tk.customer+'</span></div>';
+    h += '<div class="tk-row"><span class="tk-label">'+t('पता','Address')+'</span><span class="tk-value" style="font-size:12px;max-width:180px;text-align:right">'+tk.address+'</span></div>';
+    h += '<button class="tk-cta" onclick="showOv(\'ovPickupPlaceholder\')">'+t('शुरू करें','Start Pickup')+'</button></div></div>';
+  });
+  document.getElementById('pickupList').innerHTML = h;
+}
+
+// ─── FINANCIAL CONSEQUENCE ─────────────────────────────
+function renderFailScreen(){
+  var total = state.notRecovered * 250;
+  document.getElementById('lockedAmt').textContent = '₹'+total.toLocaleString('en-IN');
+  document.getElementById('failCntCalc').textContent = state.notRecovered;
+  document.getElementById('calcTotal').textContent = '₹'+total.toLocaleString('en-IN');
+  document.querySelector('#s5 .dw-label').textContent = t('लॉक्ड डिपॉजिट','Locked Deposit');
+  document.querySelector('#s5 .info-box').innerHTML = '<span class="mi" style="font-size:16px;vertical-align:middle">info</span> '+t('कस्टमर से नेट बॉक्स वापस ला कर आप लॉक्ड डिपॉजिट वापस पा सकते हैं।','Recover the net box from customer to unlock your deposit.');
+  document.querySelector('#s5 .fs16.fw7').textContent = t('डिवाइस डिटेल्स','Device Details');
+  var h='';
+  state.notRecoveredDevices.forEach(function(d){
+    h += '<div class="did-row"><span class="mi tc-neg">error</span><span class="did-id">'+d.id+'</span><span class="did-date">'+d.date+'</span></div>';
+  });
+  document.getElementById('failList').innerHTML = '<div class="card" style="padding:0;overflow:hidden">'+h+'</div>';
+}
+
+// ─── CONFIRM DELIVERY ──────────────────────────────────
+function renderConfirmDelivery(){
+  if(!state.activeOrder){
+    document.getElementById('confirmTitle').textContent = t('कोई पेंडिंग डिलीवरी नहीं है','No pending delivery');
+    document.getElementById('confirmDeviceList').innerHTML = '<div class="text-center tc-sec" style="padding:32px 0"><span class="mi" style="font-size:48px;color:var(--hint)">inventory_2</span><div class="mt8">'+t('अभी कोई ऑर्डर कन्फर्म करने के लिए नहीं है','No order to confirm right now')+'</div></div>';
+    document.getElementById('confirmExpand').style.display='none';
+    document.getElementById('confirmCb').style.display='none';
+    return;
+  }
+  document.getElementById('confirmCb').style.display='';
+  var cnt = state.activeOrder.count;
+  document.getElementById('confirmTitle').textContent = t(cnt+' नेट बॉक्स की डिलीवरी कन्फर्म करें','Confirm delivery of '+cnt+' net boxes');
+  document.getElementById('confirmCbText').textContent = t('हाँ, '+cnt+' नेट बॉक्स का ऑर्डर मिल गया','Yes, I received '+cnt+' net boxes');
+  document.querySelector('#s6 .fs14.fw6').textContent = t('नेट बॉक्स डिटेल','Net Box Details');
+  // Generate device IDs matching ordered count
+  var ids = [];
+  for(var d=0;d<cnt;d++){
+    var prefix = d%3===0?'SY':'GX';
+    ids.push(prefix+(25301+d));
+  }
+  var show = state.confirmExpanded ? ids.length : Math.min(3, ids.length);
+  var h='';
+  for(var i=0;i<Math.min(show,ids.length);i++){
+    h+='<div class="did-row"><span class="mi">router</span><span class="did-id">'+ids[i]+'</span></div>';
+  }
+  document.getElementById('confirmDeviceList').innerHTML = h;
+  var exp = document.getElementById('confirmExpand');
+  if(cnt<=3) exp.style.display='none';
+  else { exp.style.display='flex'; exp.innerHTML = state.confirmExpanded ? 'कम देखें <span class="mi" style="font-size:18px">expand_less</span>' : 'और '+(cnt-3)+' देखें <span class="mi" style="font-size:18px">expand_more</span>'; }
+  document.getElementById('confirmCb').classList.remove('checked');
+}
+function toggleConfirmExpand(){
+  state.confirmExpanded = !state.confirmExpanded;
+  renderConfirmDelivery();
+}
+function toggleConfirmCb(){
+  var cb = document.getElementById('confirmCb');
+  cb.classList.toggle('checked');
+  if(cb.classList.contains('checked')){
+    setTimeout(function(){
+      var orderedCount = state.activeOrder ? state.activeOrder.count : 0;
+      state.atOffice += orderedCount;
+      state.total += orderedCount;
+      // Add delivered devices to office list
+      for(var i=0;i<orderedCount;i++){
+        var prefix = i%3===0?'SY':'GX';
+        state.officeDevices.push({id:prefix+(25301+i), status:'ok'});
+      }
+      state.activeOrder = null;
+      state.deliveryPending = false;
+      state.deliveryHours = 0;
+      go('s1');
+    },600);
+  }
+}
+
+// ─── SUCCESS FUND ──────────────────────────────────────
+function renderFund(){
+  document.getElementById('fundBalance').textContent = '₹'+state.fundBalance.toLocaleString('en-IN');
+  document.querySelector('#s7 .fs14.tc-sec').textContent = t('कुल अमाउंट','Total Amount');
+  document.querySelector('#s7 .fs16.fw7').textContent = t('हाल ही में किए गए टॉप-अप','Recent Top-ups');
+  var h='';
+  state.transactions.forEach(function(tx){
+    var iconCls = tx.type==='credit'?'credit':'debit';
+    var amtCls = tx.type==='credit'?'credit':'debit';
+    var sign = tx.type==='credit'?'+':'−';
+    var desc = tx.desc;
+    if(currentLang==='en'){
+      if(desc==='टॉप-अप') desc='Top-up';
+      else if(desc==='सक्सेस फंड (जॉइनिंग)') desc='Success Fund (Joining)';
+      else if(desc.indexOf('नेट बॉक्स ऑर्डर')!==-1) desc=desc.replace('नेट बॉक्स ऑर्डर','net box order');
+    }
+    h += '<div class="tx-row"><div class="tx-icon '+iconCls+'"><span class="mi">'+(tx.type==='credit'?'arrow_downward':'arrow_upward')+'</span></div>';
+    h += '<div class="tx-info"><div class="tx-desc">'+desc+'</div><div class="tx-date">'+tx.date+'</div></div>';
+    h += '<div class="tx-amt '+amtCls+'">'+sign+'₹'+tx.amount.toLocaleString('en-IN')+'</div></div>';
+  });
+  document.getElementById('txList').innerHTML = h;
+}
+function adjustTopup(d){
+  state.topupUnits = Math.max(1,Math.min(10,state.topupUnits+d));
+  document.getElementById('topupUnits').textContent = state.topupUnits;
+  document.getElementById('topupTotal').textContent = '₹'+(state.topupUnits*2000).toLocaleString('en-IN');
+}
+function submitTopup(){
+  var cost = state.topupUnits * 2000;
+  if(cost > state.walletBalance){
+    showOv('ovInsufficient');
+    return;
+  }
+  state.walletBalance -= cost;
+  state.fundBalance += cost;
+  state.transactions.unshift({date:'आज',desc:'टॉप-अप',amount:cost,type:'credit'});
+  hideBs('bsTopup');
+  renderFund();
+  document.getElementById('fundMini').textContent = '₹'+state.fundBalance.toLocaleString('en-IN');
+}
+
+// ─── SCANNER (single-screen state machine) ────────────
+// Pattern: 1st scan session = success, 2nd = fail then success, repeat until app killed
+var camStream = null;
+var scanSessionCount = 0; // persists across scan sessions, resets on page reload
+
+function startCamera(){
+  var video = document.getElementById('camVideo');
+  var canvas = document.getElementById('camFreeze');
+  var loading = document.getElementById('camLoading');
+  video.style.display = '';
+  canvas.style.display = 'none';
+  if(loading) loading.style.display = 'flex';
+
+  function onStream(stream){
+    camStream = stream;
+    video.srcObject = stream;
+    video.onloadedmetadata = function(){ if(loading) loading.style.display = 'none'; };
+  }
+  function onFail(err){
+    console.log('Camera error:', err);
+    if(loading) loading.innerHTML = '<span class="mi" style="font-size:48px">videocam_off</span><div style="font-size:13px;margin-top:8px">कैमरा उपलब्ध नहीं है</div>';
+  }
+
+  if(camStream){ video.srcObject = camStream; if(loading) loading.style.display = 'none'; return; }
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    onFail('getUserMedia not supported');
+    return;
+  }
+
+  // Request wide-angle main camera: low resolution + environment facing
+  // High res or no width constraint can trigger telephoto/zoom lens on multi-camera devices
+  navigator.mediaDevices.getUserMedia({
+    video:{
+      facingMode:{ideal:'environment'},
+      width:{ideal:1280},
+      height:{ideal:720},
+      zoom: 1.0
+    }
+  })
+  .then(onStream)
+  .catch(function(){
+    // Fallback: enumerate devices, pick first back camera
+    navigator.mediaDevices.enumerateDevices().then(function(devices){
+      var backCams = devices.filter(function(d){ return d.kind === 'videoinput' && /back|rear|environment/i.test(d.label); });
+      var mainCam = backCams.length > 0 ? backCams[0] : null;
+      var constraints = mainCam
+        ? {video:{deviceId:{exact:mainCam.deviceId}, width:{ideal:1280}, height:{ideal:720}}}
+        : {video:true};
+      navigator.mediaDevices.getUserMedia(constraints).then(onStream).catch(onFail);
+    }).catch(function(){ navigator.mediaDevices.getUserMedia({video:true}).then(onStream).catch(onFail); });
+  });
+}
+function stopCamera(){
+  if(camStream){
+    camStream.getTracks().forEach(function(t){ t.stop(); });
+    camStream = null;
+    document.getElementById('camVideo').srcObject = null;
+  }
+}
+function freezeFrame(){
+  var video = document.getElementById('camVideo');
+  var canvas = document.getElementById('camFreeze');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.style.display = '';
+  video.style.display = 'none';
+}
+function resetScanner(){
+  document.getElementById('scanLine').style.display = 'none';
+  document.getElementById('scanMsg').textContent = t('नेट बॉक्स ID को स्कैनर के बीच में रखें','Place net box ID inside the scanner');
+  document.getElementById('scanMsg').style.display = '';
+  document.getElementById('scanCta').textContent = 'स्कैन शुरू करें';
+  document.getElementById('scanCta').style.display = '';
+  document.getElementById('scanCtaBar').style.display = '';
+  document.getElementById('scanResultBS').style.transform = 'translateY(100%)';
+  document.getElementById('scanResultOverlay').style.display = 'none';
+  document.getElementById('scanVF').style.borderColor = 'rgba(255,255,255,0.5)';
+  startCamera();
+}
+function onScanBack(){
+  stopCamera();
+  document.getElementById('scanResultBS').style.transform = 'translateY(100%)';
+  go(state.scanFrom);
+}
+function startScan(){
+  // Freeze the live view
+  freezeFrame();
+  // Show scanning animation
+  document.getElementById('scanLine').style.display = 'block';
+  document.getElementById('scanMsg').textContent = t('डिवाइस ID की जांच हो रही है...','Verifying device ID...');
+  document.getElementById('scanCta').style.display = 'none';
+
+  setTimeout(function(){
+    document.getElementById('scanLine').style.display = 'none';
+
+    // Deterministic pattern: even sessions → success, odd sessions → fail first then success on retry
+    var isFailSession = (scanSessionCount % 2 === 1);
+    var willSucceed = isFailSession ? (state.scanFails > 0) : true;
+
+    if(willSucceed){
+      // SUCCESS — green check on frozen viewfinder, then bottom sheet
+      document.getElementById('scanVF').style.borderColor = '#4CAF50';
+      document.getElementById('scanResultOverlay').style.display = 'block';
+      document.getElementById('scanResultIcon').textContent = 'check_circle';
+      document.getElementById('scanResultIcon').style.color = '#4CAF50';
+      document.getElementById('scanMsg').style.display = 'none';
+
+      var devId = 'SY' + Math.floor(25300 + Math.random() * 100);
+      setTimeout(function(){
+        document.getElementById('scanBsIcon').innerHTML = '<span class="mi" style="font-size:48px;color:var(--pos)">check_circle</span>';
+        document.getElementById('scanBsTitle').textContent = t('स्कैन सफल!','Scan Successful!');
+        document.getElementById('scanBsDesc').textContent = t('यह नेट बॉक्स आपकी इन्वेंटरी में जोड़ दिया गया है','This net box has been added to your inventory');
+        document.getElementById('scanBsDeviceId').textContent = devId;
+        document.getElementById('scanBsDeviceId').style.display = 'inline-block';
+        document.getElementById('scanBsActions').innerHTML = '<button class="cta" onclick="finishScan()">'+t('ठीक है','Okay')+'</button>';
+        document.getElementById('scanCtaBar').style.display = 'none';
+        document.getElementById('scanResultBS').style.transform = 'translateY(0)';
+      }, 600);
+
+    } else {
+      // FAIL — red X on frozen viewfinder, then bottom sheet with retry
+      state.scanFails++;
+      document.getElementById('scanVF').style.borderColor = '#F44336';
+      document.getElementById('scanResultOverlay').style.display = 'block';
+      document.getElementById('scanResultIcon').textContent = 'cancel';
+      document.getElementById('scanResultIcon').style.color = '#F44336';
+      document.getElementById('scanMsg').style.display = 'none';
+
+      setTimeout(function(){
+        if(state.scanFails >= 3){
+          document.getElementById('scanBsIcon').innerHTML = '<span class="mi" style="font-size:48px;color:var(--neg)">cancel</span>';
+          document.getElementById('scanBsTitle').textContent = t('3 बार स्कैन फेल हो गया','Scan failed 3 times');
+          document.getElementById('scanBsDesc').textContent = t('नेट बॉक्स की साफ़ फोटो लें ताकि ID पहचानी जा सके','Take a clear photo of the net box to identify it');
+          document.getElementById('scanBsDeviceId').style.display = 'none';
+          document.getElementById('scanBsActions').innerHTML = '<button class="cta mb8" onclick="stopCamera();go(\'s11\')">'+t('नेट बॉक्स की फोटो लें','Take Photo')+'</button><button class="cta cta-outline" onclick="state.scanFails=0;resetScanner()">'+t('दोबारा स्कैन करें','Try Scanning Again')+'</button>';
+        } else {
+          document.getElementById('scanBsIcon').innerHTML = '<span class="mi" style="font-size:48px;color:var(--warn)">error_outline</span>';
+          document.getElementById('scanBsTitle').textContent = t('स्कैन ढंग से नहीं हो पाया','Scan was not successful');
+          document.getElementById('scanBsDesc').textContent = t('कोशिश','Attempt') + ' ' + state.scanFails + '/3';
+          document.getElementById('scanBsDeviceId').style.display = 'none';
+          document.getElementById('scanBsActions').innerHTML = '<button class="cta" onclick="resetScanner()">'+t('दोबारा कोशिश करें','Try Again')+'</button>';
+        }
+        document.getElementById('scanCtaBar').style.display = 'none';
+        document.getElementById('scanResultBS').style.transform = 'translateY(0)';
+      }, 600);
+    }
+  }, 2000);
+}
+function finishScan(){
+  state.atOffice++;
+  state.toPickup = Math.max(0, state.toPickup - 1);
+  state.scanFails = 0;
+  scanSessionCount++;
+  state.officeDevices.push({id: 'SY' + Math.floor(25300 + Math.random() * 100), status: 'ok'});
+  stopCamera();
+  go(state.scanFrom);
+}
+function submitPhoto(){
+  if(Math.random() < 0.8){
+    var devId = 'SY' + Math.floor(25300 + Math.random() * 100);
+    state.scanFails = 0;
+    scanSessionCount++;
+    state.atOffice++;
+    state.toPickup = Math.max(0, state.toPickup - 1);
+    state.officeDevices.push({id: devId, status: 'ok'});
+    go('s8');
+    setTimeout(function(){
+      document.getElementById('camFreeze').style.display = 'none';
+      document.getElementById('camVideo').style.display = 'none';
+      document.getElementById('scanLine').style.display = 'none';
+      document.getElementById('scanMsg').style.display = 'none';
+      document.getElementById('scanCtaBar').style.display = 'none';
+      document.getElementById('scanResultOverlay').style.display = 'block';
+      document.getElementById('scanResultIcon').textContent = 'check_circle';
+      document.getElementById('scanResultIcon').style.color = '#4CAF50';
+      document.getElementById('scanBsIcon').innerHTML = '<span class="mi" style="font-size:48px;color:var(--pos)">check_circle</span>';
+      document.getElementById('scanBsTitle').textContent = t('फोटो से पहचान हुई!','Identified from Photo!');
+      document.getElementById('scanBsDesc').textContent = t('यह नेट बॉक्स आपकी इन्वेंटरी में जोड़ दिया गया है','This net box has been added to your inventory');
+      document.getElementById('scanBsDeviceId').textContent = devId;
+      document.getElementById('scanBsDeviceId').style.display = 'inline-block';
+      document.getElementById('scanBsActions').innerHTML = '<button class="cta" onclick="finishScan()">ठीक है</button>';
+      document.getElementById('scanResultBS').style.transform = 'translateY(0)';
+    }, 100);
+  } else {
+    state.scanFails = 0;
+    scanSessionCount++;
+    go('s12');
+  }
+}
+
+// ─── LEDGER ────────────────────────────────────────────
+function renderLedger(){
+  var h='';
+  state.batches.forEach(function(b){
+    h+='<div class="batch"><div class="b-hdr"><span class="b-count">'+b.count+' '+t('नेट बॉक्स','net boxes')+'</span><span class="b-date">'+b.date+'</span></div>';
+    if(b.extra) h+='<div class="b-extra">+'+b.extra+' '+t('अतिरिक्त (रिप्लेसमेंट)','extra (replacement)')+'</div>';
+    h+='<div style="margin-top:8px">';
+    b.devices.forEach(function(d){ h+='<span style="display:inline-block;padding:2px 8px;margin:2px;background:var(--n100);border-radius:6px;font-size:12px">'+d+'</span>'; });
+    h+='</div></div>';
+  });
+  document.getElementById('ledgerList').innerHTML = h;
+}
+
+// ─── AUTO-REFRESH LANDING (order stepper updates) ─────
+setInterval(function(){
+  if(document.getElementById('s1').classList.contains('on') && state.activeOrder){
+    refreshLanding();
+  }
+}, 2000);
+
+// ─── DEMO CONTROLS ────────────────────────────────────
+function resetDemo(){
+  state.total=50; state.atCustomer=35; state.atOffice=6; state.toPickup=4; state.notRecovered=5;
+  state.officeDevices=[{id:'SY25201',status:'ok'},{id:'SY25202',status:'ok'},{id:'GX35204',status:'charge'},{id:'GX35206',status:'ok'},{id:'SY25210',status:'ok'},{id:'GX35215',status:'ok'}];
+  state.activeOrder=null; state.deliveryPending=false; state.deliveryHours=0;
+  state.fundBalance=26000; state.walletBalance=3000;
+  state.transactions=[{date:'30 Jun\'24',desc:'टॉप-अप',amount:2000,type:'credit'},{date:'30 Jun\'24',desc:'टॉप-अप',amount:4000,type:'credit'},{date:'30 Jun\'24',desc:'सक्सेस फंड (जॉइनिंग)',amount:20000,type:'credit'}];
+  state.scanFails=0; state.reqCount=5; state.topupUnits=1; state.confirmExpanded=false;
+  go('s1');
+}
+function demoDelivered(){
+  if(!state.activeOrder) state.activeOrder={count:10,step:3,date:'आज'};
+  else state.activeOrder.step=3;
+  state.deliveryPending=true; state.deliveryHours=0;
+  go('s1');
+}
+function demoInterceptor(){
+  if(!state.activeOrder) state.activeOrder={count:10,step:3,date:'2 दिन पहले'};
+  state.deliveryPending=true; state.deliveryHours=72;
+  go('s1'); // interceptor guard will redirect to s17
+}
+// Expose for console
+window.resetDemo=resetDemo; window.demoDelivered=demoDelivered; window.demoInterceptor=demoInterceptor;
+
+// ─── INIT ──────────────────────────────────────────────
+refreshLanding();
+</script>
+</body>
+</html>

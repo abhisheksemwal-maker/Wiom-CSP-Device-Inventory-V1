@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maverick — Design Review</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#e0e0e0;display:flex;height:100vh;overflow:hidden}
+#preview{width:360px;height:720px;flex-shrink:0;border:2px solid #333;border-radius:8px;overflow:hidden;margin:20px;position:relative}
+#preview iframe{width:100%;height:100%;border:none}
+#nav{width:360px;display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
+#nav button{padding:4px 8px;font-size:11px;background:#2a2a4a;color:#aaa;border:1px solid #444;border-radius:4px;cursor:pointer}
+#nav button:hover{background:#3a3a5a;color:#fff}
+#nav button.active{background:#D9008D;color:#fff;border-color:#D9008D}
+#panel{flex:1;display:flex;flex-direction:column;padding:20px;overflow:hidden;background-image:radial-gradient(circle,#ddd 1px,transparent 1px);background-size:20px 20px;background-color:#f5f5f5}
+#panel h2{font-size:18px;margin-bottom:8px;color:#D9008D}
+#panel .subtitle{font-size:12px;color:#777;margin-bottom:16px}
+#annotations{flex:1;overflow-y:auto;padding-right:8px}
+.annotation{background:#fff;border-radius:8px;padding:12px;margin-bottom:12px;border-left:3px solid #D9008D;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.annotation .el-info{font-size:11px;color:#888;margin-bottom:4px;font-family:monospace}
+.annotation .el-text{font-size:13px;color:#333;margin-bottom:8px}
+.annotation .el-styles{font-size:10px;color:#999;margin-bottom:8px;font-family:monospace;max-height:60px;overflow:hidden}
+.annotation textarea{width:100%;height:60px;background:#fafafa;color:#333;border:1px solid #ddd;border-radius:4px;padding:8px;font-size:13px;font-family:inherit;resize:vertical}
+.annotation textarea:focus{border-color:#D9008D;outline:none}
+.annotation .remove{float:right;background:none;border:none;color:#ccc;cursor:pointer;font-size:16px}
+.annotation .remove:hover{color:#f44}
+#actions{padding-top:12px;display:flex;gap:8px;flex-shrink:0}
+#actions button{flex:1;height:40px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer}
+#submit-btn{background:#D9008D;color:#fff}
+#submit-btn:hover{background:#b5007a}
+#clear-btn{background:#e0e0e0;color:#555}
+#clear-btn:hover{background:#ccc;color:#333}
+.review-highlight{outline:2px solid #D9008D !important;outline-offset:1px;cursor:crosshair !important}
+.review-selected{outline:3px solid #00e676 !important;outline-offset:1px}
+#interact-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center}
+#interact-modal.on{display:flex}
+#interact-content{background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;color:#333}
+#interact-content h3{color:#D9008D;margin-bottom:4px;font-size:16px}
+#interact-content .el-preview{font-size:11px;color:#888;font-family:monospace;margin-bottom:12px;background:#f5f5f5;padding:8px;border-radius:4px}
+#interact-content textarea{width:100%;height:80px;background:#fafafa;color:#333;border:1px solid #ddd;border-radius:4px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px}
+#interact-content textarea:focus{border-color:#D9008D;outline:none}
+#interact-content input{width:100%;height:32px;background:#fafafa;color:#333;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:12px;margin-bottom:12px}
+#interact-content input:focus{border-color:#6D17CE;outline:none}
+#interact-content .btn-row{display:flex;gap:8px}
+#interact-content .btn-row button{flex:1;height:36px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer}
+#matrix-overlay{display:none;position:absolute;inset:0;z-index:20;border-radius:6px;overflow:hidden;pointer-events:none}
+#matrix-overlay.on{display:block}
+#matrix-overlay canvas{width:100%;height:100%}
+#matrix-status{position:absolute;bottom:40%;left:50%;transform:translateX(-50%);color:#00ff41;font-size:14px;font-family:monospace;text-align:center;z-index:21;text-shadow:0 0 8px #00ff41}
+#output-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center}
+#output-modal.on{display:flex}
+#output-content{background:#2a2a4a;border-radius:12px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto}
+#output-content h3{color:#D9008D;margin-bottom:12px}
+#output-content pre{background:#1a1a2e;padding:16px;border-radius:8px;font-size:12px;color:#e0e0e0;white-space:pre-wrap;word-break:break-all}
+#output-content button{margin-top:12px;padding:8px 24px;background:#D9008D;color:#fff;border:none;border-radius:6px;cursor:pointer}
+#screen-label{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#D9008D;color:#fff;padding:2px 12px;border-radius:12px;font-size:12px;font-weight:600;z-index:10;pointer-events:none}
+.figma-ref{background:#1a1a2e;border:1px solid #6D17CE;border-radius:4px;padding:4px 8px;margin-bottom:8px;font-size:11px;display:flex;align-items:center;gap:8px}
+.figma-ref a{color:#6D17CE;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.figma-ref .remove{background:none;border:none;color:#666;cursor:pointer;font-size:14px}
+#custom-actions{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+#custom-actions button{padding:4px 10px;font-size:11px;background:#fff;color:#555;border:1px solid #ddd;border-radius:4px;cursor:pointer}
+#custom-actions button:hover{background:#eee}
+/* Flow link in annotations */
+.ann-flow{margin-top:6px}
+.ann-flow .flow-link{display:flex;align-items:center;gap:6px;padding:4px 8px;background:#f8f5ff;border:1px solid #e0d4f5;border-radius:4px;font-size:11px;margin-top:4px}
+.ann-flow .flow-link .fl-label{color:#6D17CE;font-weight:600;flex-shrink:0}
+.ann-flow .flow-link .fl-url{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;font-family:monospace}
+.ann-flow .flow-link .fl-remove{background:none;border:none;color:#ccc;cursor:pointer;font-size:14px}
+.ann-flow .flow-link .fl-remove:hover{color:#f44}
+.ann-flow-add{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:#f0ebff;color:#6D17CE;border:1px dashed #c4b5e0;border-radius:4px;font-size:11px;cursor:pointer;margin-top:6px}
+.ann-flow-add:hover{background:#e8e0ff}
+</style>
+</head>
+<body>
+<div style="display:flex;flex-direction:column;align-items:center;margin:20px;flex-shrink:0">
+  <div style="width:360px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="display:flex;gap:4px">
+      <button id="mode-review" onclick="setMode('review')" style="padding:4px 12px;font-size:12px;background:#D9008D;color:#fff;border:none;border-radius:4px;cursor:pointer">Review</button>
+      <button id="mode-interact" onclick="setMode('interact')" style="padding:4px 12px;font-size:12px;background:#2a2a4a;color:#aaa;border:1px solid #444;border-radius:4px;cursor:pointer">Interact</button>
+    </div>
+    <div id="screen-label-top" style="background:#D9008D;color:#fff;padding:2px 16px;border-radius:12px;font-size:13px;font-weight:600">--</div>
+    <div style="display:flex;gap:4px">
+      <button onclick="prevScreen()" style="width:32px;height:28px;background:#2a2a4a;color:#fff;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:16px">&larr;</button>
+      <button onclick="nextScreen()" style="width:32px;height:28px;background:#2a2a4a;color:#fff;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:16px">&rarr;</button>
+    </div>
+  </div>
+  <div id="preview">
+    <iframe id="app" src="index.html"></iframe>
+    <div id="matrix-overlay">
+      <canvas id="matrix-canvas"></canvas>
+      <div id="matrix-status">Maverick is working...</div>
+    </div>
+  </div>
+  <div id="nav"></div>
+</div>
+
+<div id="panel">
+  <h2>Design Review</h2>
+  <p class="subtitle">Click to select elements. <b>Alt+click</b> = select parent (padding). <b>Shift+click</b> = ancestor. Green overlay shows padding on hover.</p>
+  <div style="margin-bottom:12px;display:flex;gap:8px">
+    <input id="figma-url" type="text" placeholder="Paste Figma URL for this screen..." style="flex:1;height:32px;background:#fff;color:#333;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:12px">
+    <button onclick="addFigmaRef()" style="padding:0 12px;height:32px;background:#6D17CE;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer">Add Ref</button>
+  </div>
+  <!-- Dynamic custom actions from project -->
+  <div id="custom-actions"></div>
+  <div id="annotations"></div>
+  <div id="actions">
+    <button id="clear-btn" onclick="clearAll()">Clear All</button>
+    <button id="submit-btn" onclick="submitReview()">Submit Review</button>
+    <button id="deploy-btn" onclick="deployToDevice()" style="background:#008043;color:#fff">Deploy APK</button>
+  </div>
+</div>
+
+<!-- Interaction prompt modal -->
+<div id="interact-modal">
+  <div id="interact-content">
+    <h3>No interaction on this element</h3>
+    <div id="interact-el-preview" class="el-preview"></div>
+    <p style="font-size:13px;color:#555;margin-bottom:8px">Describe what should happen when this element is tapped:</p>
+    <textarea id="interact-desc" placeholder="e.g. Opens a dialog, navigates to next screen, plays audio..."></textarea>
+    <input id="interact-figma" type="text" placeholder="Figma URL for the target screen/state (optional)">
+    <div class="btn-row">
+      <button onclick="closeInteractModal()" style="background:#e0e0e0;color:#555">Cancel</button>
+      <button onclick="saveInteraction()" style="background:#D9008D;color:#fff">Add Request</button>
+    </div>
+  </div>
+</div>
+
+<div id="output-modal">
+  <div id="output-content">
+    <h3>Review Submitted</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:8px">JSON saved. Maverick will read it and apply fixes automatically.</p>
+    <pre id="output-text"></pre>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="navigator.clipboard.writeText(document.getElementById('output-text').textContent).then(()=>this.textContent='Copied!')" style="padding:8px 16px;background:#6D17CE;color:#fff;border:none;border-radius:6px;cursor:pointer">Copy Again</button>
+      <button onclick="document.getElementById('output-modal').classList.remove('on')" style="padding:8px 16px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const app = document.getElementById('app');
+const annotationsDiv = document.getElementById('annotations');
+const navDiv = document.getElementById('nav');
+let selectedElements = [];
+let counter = 0;
+let currentScreen = '';
+let mode = 'review';
+
+// --- Dynamic screen discovery ---
+let screens = [];
+
+function discoverScreens() {
+  try {
+    const doc = app.contentDocument;
+    const scrDivs = doc.querySelectorAll('.scr');
+    screens = Array.from(scrDivs).map(d => d.id).filter(Boolean);
+  } catch(e) {
+    screens = [];
+  }
+  // Rebuild nav
+  navDiv.innerHTML = '';
+  screens.forEach(id => {
+    const btn = document.createElement('button');
+    btn.textContent = id;
+    btn.onclick = () => navigateTo(id);
+    navDiv.appendChild(btn);
+  });
+  // Set initial screen
+  if (screens.length > 0) {
+    currentScreen = screens[0];
+    document.getElementById('screen-label-top').textContent = currentScreen;
+    navDiv.querySelector('button').classList.add('active');
+  }
+}
+
+// --- Dynamic custom actions from project ---
+function discoverActions() {
+  const actionsDiv = document.getElementById('custom-actions');
+  actionsDiv.innerHTML = '';
+  try {
+    const win = app.contentWindow;
+    if (win.MAVERICK_ACTIONS && Array.isArray(win.MAVERICK_ACTIONS)) {
+      win.MAVERICK_ACTIONS.forEach(action => {
+        const btn = document.createElement('button');
+        btn.textContent = action.label;
+        btn.onclick = () => { try { action.fn(); } catch(e) { console.log('Action error:', e); } };
+        actionsDiv.appendChild(btn);
+      });
+    }
+  } catch(e) {}
+}
+
+function navigateTo(id) {
+  try {
+    const iframeWin = app.contentWindow;
+    iframeWin.document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+    const target = iframeWin.document.getElementById(id);
+    if(target) target.classList.add('on');
+  } catch(e){}
+  currentScreen = id;
+  document.getElementById('screen-label-top').textContent = id;
+  navDiv.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('active', b.textContent === id);
+  });
+}
+
+function prevScreen() {
+  const idx = screens.indexOf(currentScreen);
+  if(idx > 0) navigateTo(screens[idx - 1]);
+}
+
+function nextScreen() {
+  const idx = screens.indexOf(currentScreen);
+  if(idx < screens.length - 1) navigateTo(screens[idx + 1]);
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('mode-review').style.background = m === 'review' ? '#D9008D' : '#2a2a4a';
+  document.getElementById('mode-review').style.color = m === 'review' ? '#fff' : '#aaa';
+  document.getElementById('mode-interact').style.background = m === 'interact' ? '#D9008D' : '#2a2a4a';
+  document.getElementById('mode-interact').style.color = m === 'interact' ? '#fff' : '#aaa';
+}
+
+// Wait for iframe to load
+app.onload = function() {
+  discoverScreens();
+  discoverActions();
+
+  const doc = app.contentDocument;
+
+  // Padding overlay element for visualizing padding on hover
+  const padOverlay = doc.createElement('div');
+  padOverlay.id = 'maverick-pad-overlay';
+  padOverlay.style.cssText = 'position:absolute;pointer-events:none;z-index:99999;display:none;';
+  doc.body.appendChild(padOverlay);
+
+  let lastHovered = null;
+
+  doc.addEventListener('mouseover', function(e) {
+    if(mode !== 'review') return;
+    const el = e.target;
+    el.classList.add('review-highlight');
+    lastHovered = el;
+    // Show padding visualization
+    const cs = doc.defaultView.getComputedStyle(el);
+    const pt = parseFloat(cs.paddingTop) || 0;
+    const pr = parseFloat(cs.paddingRight) || 0;
+    const pb = parseFloat(cs.paddingBottom) || 0;
+    const pl = parseFloat(cs.paddingLeft) || 0;
+    if (pt > 0 || pr > 0 || pb > 0 || pl > 0) {
+      const rect = el.getBoundingClientRect();
+      const scrollX = doc.defaultView.scrollX || 0;
+      const scrollY = doc.defaultView.scrollY || 0;
+      padOverlay.style.display = 'block';
+      padOverlay.style.left = (rect.left + scrollX) + 'px';
+      padOverlay.style.top = (rect.top + scrollY) + 'px';
+      padOverlay.style.width = rect.width + 'px';
+      padOverlay.style.height = rect.height + 'px';
+      // Green tinted padding areas using border-image trick
+      padOverlay.style.borderTop = pt + 'px solid rgba(0,200,83,0.25)';
+      padOverlay.style.borderRight = pr + 'px solid rgba(0,200,83,0.25)';
+      padOverlay.style.borderBottom = pb + 'px solid rgba(0,200,83,0.25)';
+      padOverlay.style.borderLeft = pl + 'px solid rgba(0,200,83,0.25)';
+      padOverlay.style.boxSizing = 'border-box';
+    } else {
+      padOverlay.style.display = 'none';
+    }
+  });
+  doc.addEventListener('mouseout', function(e) {
+    e.target.classList.remove('review-highlight');
+    padOverlay.style.display = 'none';
+    lastHovered = null;
+  });
+
+  // Click handler
+  // Normal click = select deepest element
+  // Alt+click = select parent (for padding containers)
+  // Shift+click = cycle upward through ancestors
+  doc.addEventListener('click', function(e) {
+    if(mode === 'interact') {
+      const el = e.target;
+      const isInteractive = el.onclick || el.closest('[onclick]') || el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.tagName === 'LABEL';
+      if(!isInteractive) {
+        e.preventDefault();
+        e.stopPropagation();
+        showInteractionPrompt(el);
+      }
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Alt+click → select parent element (for padding selection)
+    // Shift+click → go up one more level
+    let el = e.target;
+    if (e.altKey && el.parentElement && el.parentElement !== doc.body && el.parentElement !== doc.documentElement) {
+      el = el.parentElement;
+    }
+    if (e.shiftKey && el.parentElement && el.parentElement !== doc.body && el.parentElement !== doc.documentElement) {
+      el = el.parentElement;
+      if (e.altKey && el.parentElement && el.parentElement !== doc.body) {
+        el = el.parentElement; // Alt+Shift = grandparent
+      }
+    }
+
+    if(el.classList.contains('review-selected')) return;
+
+    el.classList.add('review-selected');
+    counter++;
+    const id = 'ann-' + counter;
+
+    const tag = el.tagName.toLowerCase();
+    const text = el.textContent?.substring(0, 60) || '';
+    const cs = doc.defaultView.getComputedStyle(el);
+
+    // Enhanced style capture — separate padding values
+    const pt = cs.paddingTop, pr = cs.paddingRight, pb = cs.paddingBottom, pl = cs.paddingLeft;
+    const padStr = (pt === pr && pr === pb && pb === pl) ? pt : `${pt} ${pr} ${pb} ${pl}`;
+
+    const styleInfo = [
+      'size: ' + Math.round(el.offsetWidth) + '\u00d7' + Math.round(el.offsetHeight),
+      'font: ' + cs.fontSize + ' ' + cs.fontWeight,
+      'color: ' + cs.color,
+      'bg: ' + cs.backgroundColor,
+      'padding: ' + padStr,
+      'margin: ' + cs.marginTop + ' ' + cs.marginRight + ' ' + cs.marginBottom + ' ' + cs.marginLeft,
+      'border: ' + cs.border,
+      'radius: ' + cs.borderRadius,
+      'gap: ' + (cs.gap || 'none'),
+      'display: ' + cs.display
+    ].join(' | ');
+
+    selectedElements.push({ id, el, screen: currentScreen, tag, text, styleInfo });
+
+    const card = document.createElement('div');
+    card.className = 'annotation';
+    card.id = id;
+    card.innerHTML = `
+      <button class="remove" onclick="removeAnnotation('${id}')">&times;</button>
+      <div class="el-info">[${currentScreen}] &lt;${tag}&gt;${e.altKey ? ' (parent)' : ''}${e.shiftKey ? ' (ancestor)' : ''}</div>
+      <div class="el-text">${text ? '"' + text.trim().substring(0,50) + '"' : '(no text)'}</div>
+      <div class="el-styles">${styleInfo}</div>
+      <textarea placeholder="What needs to change? (padding, color, font, icon, position, etc.)"></textarea>
+      <div class="ann-flow" id="flow-${id}">
+        <div class="flow-links"></div>
+        <div class="ann-flow-add" onclick="showFlowInput('${id}')">+ Add screen link</div>
+        <div class="flow-input" style="display:none;margin-top:4px">
+          <input type="text" placeholder="Paste Figma screen URL..." style="width:100%;height:28px;background:#fafafa;color:#333;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:11px" onkeydown="if(event.key==='Enter')addFlowLink('${id}',this)">
+        </div>
+      </div>
+    `;
+    annotationsDiv.appendChild(card);
+    annotationsDiv.scrollTop = annotationsDiv.scrollHeight;
+  }, true);
+};
+
+// Interaction requests
+let interactionRequests = [];
+let pendingInteractEl = null;
+
+function showInteractionPrompt(el) {
+  pendingInteractEl = el;
+  const tag = el.tagName.toLowerCase();
+  const text = el.textContent?.trim().substring(0, 60) || '(no text)';
+  document.getElementById('interact-el-preview').textContent = `<${tag}> "${text}"  [${currentScreen}]`;
+  document.getElementById('interact-desc').value = '';
+  document.getElementById('interact-figma').value = '';
+  document.getElementById('interact-modal').classList.add('on');
+  document.getElementById('interact-desc').focus();
+}
+
+function closeInteractModal() {
+  document.getElementById('interact-modal').classList.remove('on');
+  pendingInteractEl = null;
+}
+
+function saveInteraction() {
+  const desc = document.getElementById('interact-desc').value.trim();
+  const figmaUrl = document.getElementById('interact-figma').value.trim();
+  if(!desc && !figmaUrl) { closeInteractModal(); return; }
+
+  const el = pendingInteractEl;
+  const tag = el ? el.tagName.toLowerCase() : '?';
+  const text = el?.textContent?.trim().substring(0, 40) || '';
+
+  if(el) { el.style.outline = '2px dashed #2196f3'; el.style.outlineOffset = '2px'; }
+
+  interactionRequests.push({ screen: currentScreen, element: `<${tag}> "${text}"`, description: desc, figmaUrl });
+
+  const card = document.createElement('div');
+  card.className = 'annotation';
+  card.style.borderLeftColor = '#2196f3';
+  card.innerHTML = `
+    <div class="el-info" style="color:#2196f3">[${currentScreen}] INTERACTION REQUEST</div>
+    <div class="el-text">${text ? '"' + text + '"' : '(element)'}</div>
+    <div class="el-styles">${desc}</div>
+    ${figmaUrl ? '<div style="font-size:11px;margin-top:4px"><a href="'+figmaUrl+'" target="_blank" style="color:#6D17CE">Figma ref</a></div>' : ''}
+  `;
+  annotationsDiv.appendChild(card);
+  closeInteractModal();
+}
+
+const figmaRefs = {};
+
+function addFigmaRef() {
+  const input = document.getElementById('figma-url');
+  const url = input.value.trim();
+  if(!url) return;
+  if(!figmaRefs[currentScreen]) figmaRefs[currentScreen] = [];
+  figmaRefs[currentScreen].push(url);
+  input.value = '';
+  const match = url.match(/node-id=([^&]+)/);
+  const nodeLabel = match ? match[1].replace('-',':') : 'ref';
+  const ref = document.createElement('div');
+  ref.className = 'figma-ref';
+  ref.innerHTML = `<span style="color:#6D17CE">Figma</span> <a href="${url}" target="_blank">${nodeLabel}</a> <span style="color:#888">[${currentScreen}]</span>`;
+  annotationsDiv.insertBefore(ref, annotationsDiv.firstChild);
+}
+
+function removeAnnotation(id) {
+  const item = selectedElements.find(s => s.id === id);
+  if(item && item.el) { try { item.el.classList.remove('review-selected'); } catch(e){} }
+  selectedElements = selectedElements.filter(s => s.id !== id);
+  const card = document.getElementById(id);
+  if(card) card.remove();
+}
+
+function clearAll() {
+  selectedElements.forEach(item => { try { item.el.classList.remove('review-selected'); } catch(e){} });
+  selectedElements = [];
+  interactionRequests = [];
+  annotationsDiv.innerHTML = '';
+}
+
+function submitReview() {
+  const byScreen = {};
+
+  selectedElements.forEach(item => {
+    const card = document.getElementById(item.id);
+    const textarea = card?.querySelector('textarea');
+    const comment = textarea?.value?.trim() || '';
+    if(comment) {
+      if(!byScreen[item.screen]) byScreen[item.screen] = { refs: figmaRefs[item.screen] || [], items: [] };
+      const entry = {
+        screen: item.screen,
+        element: '<' + item.tag + '> ' + (item.text?.substring(0,40) || ''),
+        styles: item.styleInfo,
+        correction: comment
+      };
+      if (item.flowLinks && item.flowLinks.length > 0) {
+        entry.flowScreens = item.flowLinks.map(f => ({ figmaUrl: f.url, nodeId: f.nodeId }));
+      }
+      byScreen[item.screen].items.push(entry);
+    }
+  });
+
+  interactionRequests.forEach(r => {
+    if(!byScreen[r.screen]) byScreen[r.screen] = { refs: figmaRefs[r.screen] || [], items: [] };
+    byScreen[r.screen].items.push({
+      element: r.element,
+      styles: 'INTERACTION REQUEST',
+      correction: r.description + (r.figmaUrl ? '\nFigma: ' + r.figmaUrl : '')
+    });
+  });
+
+  const totalItems = Object.values(byScreen).reduce((sum, s) => sum + s.items.length, 0);
+  if(totalItems === 0) {
+    alert('Add comments or interaction requests before submitting.');
+    return;
+  }
+
+  let output = '';
+  let idx = 0;
+  Object.entries(byScreen).forEach(([screen, data]) => {
+    output += `=== Screen: ${screen} ===\n`;
+    if(data.refs.length) output += `Figma: ${data.refs.join('\n        ')}\n`;
+    data.items.forEach(r => {
+      idx++;
+      output += `[${idx}] Element: ${r.element}\n    Current: ${r.styles}\n    Fix: ${r.correction}\n\n`;
+    });
+    output += '\n';
+  });
+
+  document.getElementById('output-text').textContent = output;
+  document.getElementById('output-modal').classList.add('on');
+  navigator.clipboard.writeText(output).catch(() => {});
+
+  startMatrix();
+  document.getElementById('submit-btn').textContent = 'Maverick is working...';
+  document.getElementById('submit-btn').style.background = '#6D17CE';
+
+  const reviewData = { timestamp: new Date().toISOString(), screens: byScreen, interactionRequests };
+  fetch('/api/review', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(reviewData, null, 2)
+  }).then(r => r.json()).then(d => {
+    startReloadPoll();
+  }).catch(e => console.log('Server not running, review copied to clipboard only'));
+}
+
+// Matrix digital rain
+let matrixAnim = null;
+function startMatrix() {
+  const overlay = document.getElementById('matrix-overlay');
+  const canvas = document.getElementById('matrix-canvas');
+  overlay.classList.add('on');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 360; canvas.height = 720;
+  const cols = Math.floor(canvas.width / 14);
+  const drops = Array(cols).fill(1);
+  const chars = 'ABCDEF0123456789<>{}[]';
+  function drawMatrix() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00ff41';
+    ctx.font = '12px monospace';
+    for (let i = 0; i < drops.length; i++) {
+      ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 14, drops[i] * 14);
+      if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+  }
+  matrixAnim = setInterval(drawMatrix, 50);
+}
+
+function stopMatrix() {
+  if (matrixAnim) { clearInterval(matrixAnim); matrixAnim = null; }
+  document.getElementById('matrix-overlay').classList.remove('on');
+}
+
+let pollInterval = null;
+function startReloadPoll() {
+  if(pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(() => {
+    fetch('/api/check-reload').then(r => r.json()).then(d => {
+      if(d.reload) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        stopMatrix();
+        app.src = 'index.html?' + Date.now();
+        document.getElementById('submit-btn').textContent = 'Submit Review';
+        document.getElementById('submit-btn').style.background = '#D9008D';
+        clearAll();
+        setTimeout(() => {
+          discoverScreens();
+          discoverActions();
+          navigateTo(currentScreen);
+        }, 500);
+        showNotification('Maverick updated the screens. Ready for review.');
+      }
+    }).catch(() => {});
+  }, 2000);
+}
+
+function deployToDevice() {
+  const btn = document.getElementById('deploy-btn');
+  btn.textContent = 'Building...';
+  btn.style.background = '#6D17CE';
+  fetch('/api/deploy', { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      btn.style.background = '#008043';
+      if(d.status === 'deployed') {
+        btn.textContent = 'Deployed!';
+        showNotification('APK deployed to ' + d.device);
+      } else if(d.status === 'built') {
+        btn.textContent = 'APK Saved';
+        showNotification(d.note || 'No device connected. APK saved.');
+      } else {
+        btn.textContent = 'Error';
+        showNotification('Error: ' + d.message);
+      }
+      setTimeout(() => { btn.textContent = 'Deploy APK'; }, 3000);
+    })
+    .catch(e => {
+      btn.textContent = 'Deploy APK';
+      btn.style.background = '#008043';
+      showNotification('Server error: ' + e.message);
+    });
+}
+
+function showNotification(msg) {
+  const n = document.createElement('div');
+  n.style.cssText = 'position:fixed;top:20px;right:20px;background:#008043;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;z-index:2000;animation:fadeIn 0.3s ease';
+  n.textContent = msg;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 4000);
+}
+
+// ─── Flow Links (per annotation) ───
+function showFlowInput(annId) {
+  const flowDiv = document.getElementById('flow-' + annId);
+  const input = flowDiv.querySelector('.flow-input');
+  input.style.display = 'block';
+  input.querySelector('input').focus();
+}
+
+function addFlowLink(annId, inputEl) {
+  const url = inputEl.value.trim();
+  if (!url) return;
+  const match = url.match(/node-id=([^&]+)/);
+  const nodeId = match ? match[1].replace(/-/g, ':') : '';
+  const label = nodeId || 'screen';
+
+  // Store on the annotation item
+  const item = selectedElements.find(s => s.id === annId);
+  if (item) {
+    if (!item.flowLinks) item.flowLinks = [];
+    item.flowLinks.push({ url, nodeId });
+  }
+
+  // Render the link pill
+  const flowDiv = document.getElementById('flow-' + annId);
+  const linksDiv = flowDiv.querySelector('.flow-links');
+  const idx = item ? item.flowLinks.length - 1 : 0;
+  const pill = document.createElement('div');
+  pill.className = 'flow-link';
+  pill.innerHTML = `<span class="fl-label">${item.flowLinks.length === 1 ? 'Screen →' : '→'}</span>
+    <a href="${url}" target="_blank" class="fl-url" style="color:#6D17CE;text-decoration:none">${label}</a>
+    <button class="fl-remove" onclick="removeFlowLink('${annId}',${idx},this.parentElement)">&times;</button>`;
+  linksDiv.appendChild(pill);
+
+  inputEl.value = '';
+}
+
+function removeFlowLink(annId, idx, el) {
+  const item = selectedElements.find(s => s.id === annId);
+  if (item && item.flowLinks) item.flowLinks.splice(idx, 1);
+  el.remove();
+}
+</script>
+</body>
+</html>
